@@ -1,15 +1,8 @@
-import os
-from dotenv import load_dotenv
 import streamlit as st
 
 st.title("Hello")
 # st.write("Werite text")
 # st.text("text ")
-
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-st.write(f"Your API key is: {api_key}")
-
 
 ans=st.selectbox("Slect ",['First','Second','Third'])
 st.write(f"Your selected value is {ans}")
