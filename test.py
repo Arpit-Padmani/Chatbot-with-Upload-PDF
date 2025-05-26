@@ -1,31 +1,39 @@
-from InstructorEmbedding import INSTRUCTOR
-import faiss
-import numpy as np
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain.llms import HuggingFaceHub
 
-# Load the model
-model = INSTRUCTOR('hkunlp/instructor-xl')
+# Load embeddings
+embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# Define instructions and texts
-instructions = ["Represent the document for retrieval"] * 2
-texts = ["LangChain makes LLMs more usable", "ChatGPT is useful"]
+# Sample text chunks (from PDF)
+text_chunks = [
+    "LangChain is a framework for developing applications powered by language models.",
+    "FAISS is a library for efficient similarity search and clustering of dense vectors.",
+]
 
-# Prepare inputs for encoding
-inputs = list(zip(instructions, texts))
+# Build vector store
+vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embedding)
 
-# Get embeddings
-embeddings = model.encode(inputs)
+# Initialize memory
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
+)
 
-# Print the result
-print("Shape of embeddings:", embeddings.shape)
+# Define LLM
+llm = HuggingFaceHub(
+    repo_id="mistralai/Mistral-7B-Instruct-v0.1",  # or any compatible HF model
+    model_kwargs={"temperature": 0.5, "max_length": 512}
+)
 
-# Build FAISS index
-dimension = embeddings.shape[1]
-index = faiss.IndexFlatL2(dimension)
-index.add(np.array(embeddings))
+# Create the ConversationalRetrievalChain object
+conversation_chain = ConversationalRetrievalChain.from_llm(
+    llm=llm,
+    retriever=vectorstore.as_retriever(),
+    memory=memory,
+    return_source_documents=True  # Optional: include document sources in output
+)
 
-# Search
-query_instruction = "Represent the query for retrieving relevant documents"
-query_embedding = model.encode([[query_instruction, "How is ChatGPT used?"]])
-D, I = index.search(np.array(query_embedding), k=1)
-
-print("Most relevant index:", I[0][0])
+print(conversation_chain)
