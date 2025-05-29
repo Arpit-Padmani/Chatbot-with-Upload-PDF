@@ -44,7 +44,7 @@ def get_vectorstore(text_chunks):
     return vectorstore
 
 def get_conversation_chain(vector):
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
+    # os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash-latest",  # Updated model name
         temperature=0.5,
@@ -82,20 +82,24 @@ def main():
     user_quetion=st.text_input('Ask Question about PDF')
     if user_quetion:
         handle_userinput(user_quetion)
+    st.write(st.session_state.chat_history)
 
     with st.sidebar:
         st.subheader("Your Documents")
         pdf_docs=st.file_uploader('Upload PDF Or Documents',accept_multiple_files=True)
-        if st.button('Proccess'):
-            with st.spinner("Proccessing"):
-                raw_txt=get_pdf_text(pdf_docs)
+        # if st.button('Proccess'):
+        if pdf_docs and st.session_state.chat_history is None:
+            raw_txt=get_pdf_text(pdf_docs)
+            st.write(raw_txt)
+            st.success("Processed without click on proccesed")
+            #
 
-                text_chunks=get_text_chunks(raw_txt)
+            text_chunks=get_text_chunks(raw_txt)
 
-                vector=get_vectorstore(text_chunks)
+            vector=get_vectorstore(text_chunks)
 
-                st.session_state.conversation = get_conversation_chain(vector)
-                st.success("PDFs Processed")
+            st.session_state.conversation = get_conversation_chain(vector)
+            st.success("PDFs Processed")
 
 if __name__=='__main__':
     main()
