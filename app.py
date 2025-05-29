@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
+from pathlib import Path
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.memory import ConversationBufferMemory
@@ -10,12 +11,20 @@ from htmlTemplate import  css,bot_template,user_template
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 
+
+def extract_text_from_txt(txt_path):
+    text = txt_path.read().decode('utf-16')
+    return text
+
 def get_pdf_text(pdf_docs):
     text=""
     for pdf in pdf_docs:
-        pdf_reader=PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text+=page.extract_text()
+        if Path(pdf.name).suffix == '.txt':
+            text = extract_text_from_txt(pdf)
+        else :
+            pdf_reader=PdfReader(pdf)
+            for page in pdf_reader.pages:
+                text+=page.extract_text()
     return text
 
 def get_text_chunks(raw_text):
@@ -53,7 +62,7 @@ def handle_userinput(user_question):
     if st.session_state.conversation is not None:
         response = st.session_state.conversation({'question': user_question})
         st.session_state.chat_history=response['chat_history']
-        for i,message in enumerate(st.session_state.chat_history):
+        for i,message in enumerate(reversed(st.session_state.chat_history)):
             if i%2==0:
                 st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
             else:
