@@ -1,3 +1,5 @@
+import uuid
+
 import streamlit as st
 import os
 from dotenv import load_dotenv
@@ -58,15 +60,24 @@ def get_conversation_chain(vector):
                                                                memory=memory)
     return conversation_chain
 
-def handle_userinput(user_question):
+
+def msg_print(chat_placeholder):
+    if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
+        with chat_placeholder.container():
+            for i, message in enumerate(reversed(st.session_state.chat_history)):
+                if i % 2 == 0:
+                    st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+                else:
+                    st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+    else:
+        with chat_placeholder.container():
+            st.info("No active chat. Upload PDF to start.")
+
+def handle_userinput(user_question,chat_placeholder):
     if st.session_state.conversation is not None:
         response = st.session_state.conversation({'question': user_question})
         st.session_state.chat_history=response['chat_history']
-        for i,message in enumerate(reversed(st.session_state.chat_history)):
-            if i%2==0:
-                st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
-            else:
-                st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+        msg_print(chat_placeholder)
     else:
         st.warning("Please upload and process a PDF first.")
 
@@ -74,32 +85,54 @@ def main():
     load_dotenv()
     st.set_page_config(page_title="ChatBot With PDF",page_icon=":books:")
     st.write(css,unsafe_allow_html=True)
-    if 'conversation' not in st.session_state :
+    st.session_state.chat_ended = False
+
+    if "uploader_key" not in st.session_state:
+        st.session_state["uploader_key"] = str(uuid.uuid4())
+
+    if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history= None
+
     st.header("ChatBot With PDF :books:")
     user_quetion=st.text_input('Ask Question about PDF')
+
+    chat_placeholder = st.empty()
+
     if user_quetion:
-        handle_userinput(user_quetion)
-    st.write(st.session_state.chat_history)
+        handle_userinput(user_quetion, chat_placeholder)
+    else:
+        # Initial print to show chat history or info
+        msg_print(chat_placeholder)
+
 
     with st.sidebar:
+        col1, col2, col3 = st.columns([1, 1, 2])  # adjust weights for alignment
+
+        with col3:
+            if  st.button("🔚 End Chat"):
+                st.session_state.chat_history = None
+                st.session_state.conversation = None
+                st.session_state.chat_ended = True
+                st.session_state["uploader_key"] = str(uuid.uuid4())
+                chat_placeholder.empty()
+                st.toast("🔚 Chat has been successfully ended.", icon="⚠️")
+                # st.warning("<UNK> chat End ")
+
         st.subheader("Your Documents")
-        pdf_docs=st.file_uploader('Upload PDF Or Documents',accept_multiple_files=True)
-        # if st.button('Proccess'):
-        if pdf_docs and st.session_state.chat_history is None:
-            raw_txt=get_pdf_text(pdf_docs)
-            st.write(raw_txt)
-            st.success("Processed without click on proccesed")
-            #
+        pdf_docs = st.file_uploader('Upload PDF Or Documents', accept_multiple_files=True,key=st.session_state["uploader_key"])
 
-            text_chunks=get_text_chunks(raw_txt)
+        if not st.session_state.get("chat_ended", False):
+            if pdf_docs and st.session_state.chat_history is None:
+                raw_txt=get_pdf_text(pdf_docs)
 
-            vector=get_vectorstore(text_chunks)
+                text_chunks=get_text_chunks(raw_txt)
 
-            st.session_state.conversation = get_conversation_chain(vector)
-            st.success("PDFs Processed")
+                vector=get_vectorstore(text_chunks)
+
+                st.session_state.conversation = get_conversation_chain(vector)
+                st.success("PDFs Processed")
 
 if __name__=='__main__':
     main()
