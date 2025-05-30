@@ -1,5 +1,4 @@
 import uuid
-
 import streamlit as st
 import os
 from dotenv import load_dotenv
@@ -60,7 +59,6 @@ def get_conversation_chain(vector):
                                                                memory=memory)
     return conversation_chain
 
-
 def msg_print(chat_placeholder):
     if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
         with chat_placeholder.container():
@@ -83,7 +81,7 @@ def handle_userinput(user_question,chat_placeholder):
 
 def main():
     load_dotenv()
-    st.set_page_config(page_title="ChatBot With PDF",page_icon=":books:")
+    st.set_page_config(page_title="AI Assistant for PDFs & Texts",page_icon="🤖")
     st.write(css,unsafe_allow_html=True)
     st.session_state.chat_ended = False
 
@@ -95,21 +93,17 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history= None
 
-    st.header("ChatBot With PDF :books:")
+    st.header("AI Assistant for PDFs & Texts 🤖")
     user_quetion=st.text_input('Ask Question about PDF')
-
     chat_placeholder = st.empty()
 
     if user_quetion:
         handle_userinput(user_quetion, chat_placeholder)
     else:
-        # Initial print to show chat history or info
         msg_print(chat_placeholder)
-
 
     with st.sidebar:
         col1, col2, col3 = st.columns([1, 1, 2])  # adjust weights for alignment
-
         with col3:
             if  st.button("🔚 End Chat"):
                 st.session_state.chat_history = None
@@ -118,7 +112,6 @@ def main():
                 st.session_state["uploader_key"] = str(uuid.uuid4())
                 chat_placeholder.empty()
                 st.toast("🔚 Chat has been successfully ended.", icon="⚠️")
-                # st.warning("<UNK> chat End ")
 
         st.subheader("Your Documents")
         pdf_docs = st.file_uploader('Upload PDF Or Documents', accept_multiple_files=True,key=st.session_state["uploader_key"])
