@@ -49,7 +49,7 @@ def get_conversation_chain(vector):
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash-latest",  # Updated model name
         temperature=0.5,
-        google_api_key=os.getenv("GEMMINI_API_KEY")
+        google_api_key="AIzaSyD4hdJ3AaNnGn3Ldvqs9kyHxtTOAcvqlto"
     )
     memory = ConversationBufferMemory(
         memory_key="chat_history",
