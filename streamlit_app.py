@@ -51,6 +51,7 @@ def get_conversation_chain(vector):
         temperature=0.5,
         google_api_key="AIzaSyD4hdJ3AaNnGn3Ldvqs9kyHxtTOAcvqlto"
     )
+    # add duplicate key
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True)
