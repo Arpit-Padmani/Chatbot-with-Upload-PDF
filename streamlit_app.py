@@ -11,7 +11,7 @@ from langchain.chains import ConversationalRetrievalChain
 from htmlTemplate import  css,bot_template,user_template
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
-
+import pdfplumber
 
 def extract_text_from_txt(txt_path):
     text = txt_path.read().decode('utf-16')
@@ -26,6 +26,14 @@ def get_pdf_text(pdf_docs):
             pdf_reader=PdfReader(pdf)
             for page in pdf_reader.pages:
                 text+=page.extract_text()
+            pdf.seek(0)
+            with pdfplumber.open(pdf) as plumber_pdf:
+                for page in plumber_pdf.pages:
+                    tables = page.extract_tables()
+                    for table in tables:
+                        for row in table:
+                            row_text = ' | '.join(cell.strip() if cell else '' for cell in row)
+                            text += row_text + "\n"
     return text
 
 def get_text_chunks(raw_text):
