@@ -57,7 +57,7 @@ def get_conversation_chain(vector):
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash-latest",  # Updated model name
         temperature=0.5,
-        google_api_key="AIzaSyD4hdJ3AaNnGn3Ldvqs9kyHxtTOAcvqlto"
+        google_api_key="AIzaSyAg8mZzVKPBycypr0_fh0sjGaZtzgcf_Ag"
     )
     # add duplicate key
     memory = ConversationBufferMemory(
@@ -103,7 +103,7 @@ def main():
         st.session_state.chat_history= None
 
     st.header("AI Assistant for PDFs & Texts 🤖")
-    user_quetion=st.text_input('Ask Question about PDF')
+    user_quetion=st.text_input('Ask Question about PDF',key="user_question")
     chat_placeholder = st.empty()
 
     if user_quetion:

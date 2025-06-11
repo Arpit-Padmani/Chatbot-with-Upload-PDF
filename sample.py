@@ -1,38 +1,43 @@
 import pdfplumber
 from PyPDF2 import PdfReader
 from pathlib import Path
+import pandas as pd
 
-# Open the PDF file
-# with pdfplumber.open("ilovepdf_merged.pdf") as pdf:
-#     for page_number, page in enumerate(pdf.pages, start=1):
-#         tables = page.extract_tables()
-        # print(tables)
-
-        # for table_index, table in enumerate(tables):
-        #     print(f"\nPage {page_number} - Table {table_index + 1}")
-        #     for row in table:
-        #         print(row)
-
-
-def get_pdf_text_and_tables(pdf_docs):
+def get_pdf_text(pdf_docs):
     text = ""
+    tables_dataframes = []
+
     for pdf in pdf_docs:
-        print(pdf)
+        # Extract text from PDF (PyPDF2)
         pdf_reader = PdfReader(pdf)
         for page in pdf_reader.pages:
-            if page.extract_text():
-                text += page.extract_text()
-            # Reset file pointer for pdfplumber (if needed)
+            text += page.extract_text() or ""
+
+        # Reset the file pointer for pdfplumber
         pdf.seek(0)
+
         with pdfplumber.open(pdf) as plumber_pdf:
             for page in plumber_pdf.pages:
                 tables = page.extract_tables()
                 for table in tables:
+                    # Append table as a DataFrame
+                    df = pd.DataFrame(table)
+                    tables_dataframes.append(df)
+
+                    # Optional: also append text version of the table
                     for row in table:
                         row_text = ' | '.join(cell.strip() if cell else '' for cell in row)
                         text += row_text + "\n"
-    return text
 
-with open("ilovepdf_merged.pdf", "rb") as f:
-    full_text = get_pdf_text_and_tables([f])
-    print(full_text)
+    return text, tables_dataframes
+
+# Usage
+with open("check.pdf", "rb") as f:
+    text, tables = get_pdf_text([f])
+
+# Print first 5 rows of the first table
+if tables:
+    print("First Table (first 5 rows):")
+    print(tables[0])
+else:
+    print("No tables found.")
