@@ -31,13 +31,3 @@ def get_pdf_text(pdf_docs):
 
     return text, tables_dataframes
 
-# Usage
-with open("check.pdf", "rb") as f:
-    text, tables = get_pdf_text([f])
-
-# Print first 5 rows of the first table
-if tables:
-    print("First Table (first 5 rows):")
-    print(tables[0])
-else:
-    print("No tables found.")
