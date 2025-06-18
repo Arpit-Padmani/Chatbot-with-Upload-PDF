@@ -13,10 +13,12 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 import pdfplumber
 
+# read all text from text files
 def extract_text_from_txt(txt_path):
     text = txt_path.read().decode('utf-16')
     return text
 
+# read all text or tables form pdf
 def get_pdf_text(pdf_docs):
     text=""
     for pdf in pdf_docs:
@@ -36,6 +38,7 @@ def get_pdf_text(pdf_docs):
                             text += row_text + "\n"
     return text
 
+# convert war text into small small text chunks
 def get_text_chunks(raw_text):
     text_spiltter = CharacterTextSplitter(
         separator="\n",
@@ -46,12 +49,14 @@ def get_text_chunks(raw_text):
     chunks=text_spiltter.split_text(raw_text)
     return chunks
 
+# convert into vectorization from text chunks
 def get_vectorstore(text_chunks):
     load_dotenv()
     embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_texts(texts=text_chunks,embedding=embedding)
     return vectorstore
 
+# start converasation chian measn set history and get answer from query
 def get_conversation_chain(vector):
     # os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
     llm = ChatGoogleGenerativeAI(
@@ -68,6 +73,7 @@ def get_conversation_chain(vector):
                                                                memory=memory)
     return conversation_chain
 
+# print all msg to html
 def msg_print(chat_placeholder):
     if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
         with chat_placeholder.container():
@@ -80,6 +86,7 @@ def msg_print(chat_placeholder):
         with chat_placeholder.container():
             st.info("No active chat. Upload PDF to start.")
 
+# set chat history
 def handle_userinput(user_question,chat_placeholder):
     if st.session_state.conversation is not None:
         response = st.session_state.conversation({'question': user_question})
@@ -88,6 +95,7 @@ def handle_userinput(user_question,chat_placeholder):
     else:
         st.warning("Please upload and process a PDF first.")
 
+# main function of file
 def main():
     load_dotenv()
     st.set_page_config(page_title="AI Assistant for PDFs & Texts",page_icon="🤖")
